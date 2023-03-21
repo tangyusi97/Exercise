@@ -7,10 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>刷题神器</title>
     <style>
-        p {
+        #question, #options{
             line-height: 2;
         }
-        
+
+        #control button {
+            padding: 10px;
+        }
+
         ol {
             padding-left: 20px;
         }
@@ -40,32 +44,39 @@
 </head>
 
 <body>
-    <h1 style="text-align: center;">刷题神器</h1>
-    <form action="#" id="operator">
-        <p>
-            <select name="content" title="选择题库" onchange="changeContent(this)">
-                <option value="">--请选择题库--</option>
-                <option value="二十大.txt">二十大题库</option>
-            </select>
-            <input checked type="radio" name="sort" id="sort-ascend" value="acend" /><label for="sort-ascend">顺序</label>
-            <input type="radio" name="sort" id="sort-descend" value="descend" /><label for="sort-descend">倒序</label>
-            <input type="radio" name="sort" id="sort-random" value="random" /><label for="sort-random">随机</label>
-        </p>
-        <p>
-            <input checked type="checkbox" name="single" id="type-single"><label for="type-single">单选题</label>
-            <input checked type="checkbox" name="muti" id="type-muti"><label for="type-muti">多选题</label>
-            <input checked type="checkbox" name="true-false" id="type-true-false"><label
-                for="type-true-false">判断题</label>
-            <input checked type="checkbox" name="blank" id="type-blank"><label for="type-blank">填空题</label>
-            <input checked type="checkbox" name="essay" id="type-essay"><label for="type-essay">简答题</label>
-        </p>
-    </form>
-    <p style="text-align: end;"><button onclick="applyOperator()">应用</button></p>
+    <header>
+        <h1 style="text-align: center;">刷题神器</h1>
+        <form action="#" id="operator">
+            <p>
+                <select name="content" title="选择题库" onchange="changeContent(this)">
+                    <option value="">--请选择题库--</option>
+                    <option value="二十大.txt">二十大题库</option>
+                </select>
+                <input checked type="radio" name="sort" id="sort-ascend" value="acend" /><label
+                    for="sort-ascend">顺序</label>
+                <input type="radio" name="sort" id="sort-descend" value="descend" /><label for="sort-descend">倒序</label>
+                <input type="radio" name="sort" id="sort-random" value="random" /><label for="sort-random">随机</label>
+            </p>
+            <p>
+                <input checked type="checkbox" name="single" id="type-single"><label for="type-single">单选题</label>
+                <input checked type="checkbox" name="muti" id="type-muti"><label for="type-muti">多选题</label>
+                <input checked type="checkbox" name="true-false" id="type-true-false">
+                <label for="type-true-false">判断题</label>
+                <input checked type="checkbox" name="blank" id="type-blank"><label for="type-blank">填空题</label>
+                <input checked type="checkbox" name="essay" id="type-essay"><label for="type-essay">简答题</label>
+            </p>
+        </form>
+    </header>
+    <p style="text-align: end;">
+        <button onclick="toggleHeader(this)">隐藏</button>
+        <button onclick="applyOperator()">应用</button>
+    </p>
     <p id="question"></p>
     <p id="options"></p>
-    <p style="text-align: end;">
+    <p id="control" style="text-align: end;">
         <button class="hidden" id="submit" onclick="submit()">确认</button>
         <button class="hidden" id="answer" onclick="answer()">答案</button>
+        <button id="next" onclick="prev()">上一题</button>
         <button id="next" onclick="next()">下一题</button>
     </p>
     <p style="text-align: end; margin-top: 40px;">
@@ -209,6 +220,13 @@
             }
         }
 
+        function prev() {
+            if (currentIndex > 1) {
+                currentIndex--;
+                createQuestion();
+            }
+        }
+
         function submit() {
             const lis = document.getElementById('options').children[0].children;
             Object.values(lis).forEach(li => {
@@ -225,6 +243,17 @@
         function answer() {
             const question = contentFilter[currentIndex - 1];
             document.getElementById('options').innerText = question['答案'].replace(/;;/g, '\n');
+        }
+
+        function toggleHeader(e) {
+            const header = document.getElementsByTagName('header')[0];
+            if (header.className == '') {
+                header.className = 'hidden';
+                e.innerText = '显示';
+            } else {
+                header.className = '';
+                e.innerText = '隐藏';
+            }
         }
 
     </script>
