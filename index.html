@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刷题神器</title>
+    <style>
+        p {
+            line-height: 2;
+        }
+        
+        ol {
+            padding-left: 20px;
+        }
+
+        li {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+        }
+
+        .error {
+            background-color: lightcoral;
+        }
+
+        .correct {
+            background-color: lightgreen;
+        }
+
+        .selected {
+            background-color: lightgray;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">刷题神器</h1>
+    <form action="#" id="operator">
+        <p>
+            <select name="content" title="选择题库" onchange="changeContent(this)">
+                <option value="">--请选择题库--</option>
+                <option value="二十大.txt">二十大题库</option>
+            </select>
+            <input checked type="radio" name="sort" id="sort-ascend" value="acend" /><label for="sort-ascend">顺序</label>
+            <input type="radio" name="sort" id="sort-descend" value="descend" /><label for="sort-descend">倒序</label>
+            <input type="radio" name="sort" id="sort-random" value="random" /><label for="sort-random">随机</label>
+        </p>
+        <p>
+            <input checked type="checkbox" name="single" id="type-single"><label for="type-single">单选题</label>
+            <input checked type="checkbox" name="muti" id="type-muti"><label for="type-muti">多选题</label>
+            <input checked type="checkbox" name="true-false" id="type-true-false"><label
+                for="type-true-false">判断题</label>
+            <input checked type="checkbox" name="blank" id="type-blank"><label for="type-blank">填空题</label>
+            <input checked type="checkbox" name="essay" id="type-essay"><label for="type-essay">简答题</label>
+        </p>
+    </form>
+    <p style="text-align: end;"><button onclick="applyOperator()">应用</button></p>
+    <p id="question"></p>
+    <p id="options"></p>
+    <p style="text-align: end;">
+        <button class="hidden" id="submit" onclick="submit()">确认</button>
+        <button class="hidden" id="answer" onclick="answer()">答案</button>
+        <button id="next" onclick="next()">下一题</button>
+    </p>
+    <p style="text-align: end; margin-top: 40px;">
+        <span>跳转：</span>
+        <input type="number" name="goto" id="goto-input" placeholder="number" value="1" onchange="checkGoto(this)" />
+        <button onclick="goto()">Go</button>
+    </p>
+
+
+    <script>
+        let content = [];
+        let contentFilter = [];
+        let currentIndex = 1;  // 当前题号
+
+        function changeContent(e) {
+            if (e.value == '') return;
+            getContent(e.value);
+        }
+
+        function getContent(filename) {
+            fetch(filename).then(res => {
+                res.blob().then(file => {
+                    const reader = new FileReader();
+                    reader.readAsText(file, 'gb2312');
+                    reader.onload = () => {
+                        content = [];
+                        const allRows = reader.result.split(/\r?\n|\r/);
+                        let headers = [];
+                        for (let i = 0; i < allRows.length; i++) {
+                            const row = allRows[i].split('\t');
+                            // 获取标题
+                            if (i == 0) {
+                                headers = row;
+                                continue;
+                            }
+                            // 清除无用数据
+                            if (row[0] == '') continue;
+                            // 添加数据
+                            const rowData = {};
+                            for (let j = 0; j < row.length; j++) {
+                                rowData[headers[j]] = row[j];
+                            }
+                            content.push(rowData);
+                        }
+                        applyOperator();
+                    }
+                })
+            })
+        }
+
+        function applyOperator() {
+            currentIndex = 1;
+            const operatorData = new FormData(document.getElementById("operator"));
+            const conditions = [];
+            if (operatorData.get('single')) conditions.push('单选题');
+            if (operatorData.get('muti')) conditions.push('多选题');
+            if (operatorData.get('true-false')) conditions.push('判断题');
+            if (operatorData.get('blank')) conditions.push('填空题');
+            if (operatorData.get('essay')) conditions.push('简答题');
+
+            contentFilter = content.filter(item => conditions.includes(item['题型']));
+            if (operatorData.get('sort') == 'descend') contentFilter.reverse();
+            else if (operatorData.get('sort') == 'random') contentFilter.sort((a, b) => Math.random() > 0.5 ? -1 : 1)
+
+            createQuestion();
+        }
+
+        function checkGoto(e) {
+            if (e.value > contentFilter.length) e.value = contentFilter.length;
+            if (e.value < 1) e.value = 1;
+        }
+
+        function goto() {
+            currentIndex = document.getElementById('goto-input').value;
+            createQuestion();
+        }
+
+        function createQuestion() {
+            if (contentFilter.length == 0) return;
+            const question = contentFilter[currentIndex - 1];
+            document.getElementById('goto-input').value = currentIndex;
+            // 重置题目区域
+            const submit = document.getElementById('submit');
+            submit.className = 'hidden';
+            const answer = document.getElementById('answer');
+            answer.className = 'hidden';
+            const optionsBox = document.getElementById('options');
+            optionsBox.innerHTML = '';
+            // 输出题干
+            document.getElementById('question').innerText = `【${question['题型']}】${question['题干']}`;
+            // 输出选项
+            const ol = document.createElement('ol');
+            ol.type = 'A';
+            if (question['题型'] == '单选题') {
+                question['选项'].split(';;').forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.innerText = item;
+                    ol.appendChild(li);
+                });
+                ol.onclick = e => {
+                    if (e.target.nodeName != 'LI') return;
+                    e.target.className = 'error';
+                    ol.children[['A', 'B', 'C', 'D', 'E', 'F', 'G'].indexOf(question['答案'])].className = 'correct';
+                    ol.onclick = null;
+                };
+            }
+            if (question['题型'] == '多选题') {
+                submit.className = '';
+                question['选项'].split(';;').forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.value = index + 1;
+                    li.innerText = item;
+                    li.onclick = e => e.target.className = e.target.className == '' ? 'selected' : '';
+                    ol.appendChild(li);
+                });
+            }
+            if (question['题型'] == '判断题') {
+                const li1 = document.createElement('li');
+                li1.innerText = '正确';
+                ol.appendChild(li1);
+                const li2 = document.createElement('li');
+                li2.innerText = '错误';
+                ol.appendChild(li2);
+                ol.onclick = e => {
+                    if (e.target.nodeName != 'LI') return;
+                    e.target.className = 'error';
+                    ol.children[['对', '错'].indexOf(question['答案'])].className = 'correct';
+                    ol.onclick = null;
+                };
+            }
+            optionsBox.appendChild(ol);
+            if (question['题型'] == '填空题' || question['题型'] == '简答题') {
+                answer.className = '';
+            }
+        }
+
+        function next() {
+            if (currentIndex < contentFilter.length - 1) {
+                currentIndex++;
+                createQuestion();
+            }
+        }
+
+        function submit() {
+            const lis = document.getElementById('options').children[0].children;
+            Object.values(lis).forEach(li => {
+                const question = contentFilter[currentIndex - 1];
+                li.onclick = '';
+                if (question['答案'].includes(['A', 'B', 'C', 'D', 'E', 'F', 'G'][li.value - 1])) {
+                    li.className = 'correct';
+                } else if (li.className == 'selected') {
+                    li.className = 'error';
+                }
+            });
+        }
+
+        function answer() {
+            const question = contentFilter[currentIndex - 1];
+            document.getElementById('options').innerText = question['答案'].replace(/;;/g, '\n');
+        }
+
+    </script>
+</body>
+
+</html>
