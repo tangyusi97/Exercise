@@ -92,7 +92,7 @@
   <script>
     let content = [];
     let contentFilter = [];
-    let starList = [];
+    let starList = localStorage.getItem('starList') || [];
     let currentIndex = 1;  // 当前题号
 
     function changeContent(e) {
@@ -247,6 +247,7 @@
         starList.push(id);
         starBtn.innerText = '取消收藏';
       }
+      localStorage.setItem('starList', starList);
     }
 
     function submit() {
