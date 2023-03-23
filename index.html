@@ -51,7 +51,7 @@
       <p>
         <select name="content" title="选择题库" onchange="changeContent(this)">
           <option value="">--请选择题库--</option>
-          <option value="二十大.txt">二十大题库</option>
+          <option value="二十大">二十大题库</option>
         </select>
         <input checked type="radio" name="sort" id="sort-ascend" value="acend" /><label for="sort-ascend">顺序</label>
         <input type="radio" name="sort" id="sort-descend" value="descend" /><label for="sort-descend">倒序</label>
@@ -92,7 +92,7 @@
   <script>
     let content = [];
     let contentFilter = [];
-    let starList = localStorage.getItem('starList') || [];
+    let starList = localStorage.getItem('starList').split(',') || [];
     let currentIndex = 1;  // 当前题号
 
     function changeContent(e) {
@@ -119,7 +119,7 @@
               // 清除无用数据
               if (row[0] == '') continue;
               // 添加数据
-              const rowData = { id: filename + '-' + i };
+              const rowData = { id: filename.replace(/,/g, '') + '-' + i };
               for (let j = 0; j < row.length; j++) {
                 rowData[headers[j]] = row[j];
               }
