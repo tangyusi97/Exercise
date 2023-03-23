@@ -92,7 +92,7 @@
   <script>
     let content = [];
     let contentFilter = [];
-    let starList = localStorage.getItem('starList').split(',') || [];
+    let starList = (localStorage.getItem('starList') || '').split(',');
     let currentIndex = 1;  // 当前题号
 
     function changeContent(e) {
